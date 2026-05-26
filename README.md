@@ -28,6 +28,7 @@ create table public.todos (
   text text not null,
   completed boolean not null default false,
   priority text not null default 'medium',
+  due_at timestamptz,
   created_at timestamptz not null default now()
 );
 
@@ -60,6 +61,12 @@ using ((select auth.uid()) = user_id);
 ```
 
 4. Start the app and create an account from the sign-in screen.
+
+If you already created the table before this change, add the new column:
+
+```sql
+alter table public.todos add column due_at timestamptz;
+```
 
 ## Notes
 

@@ -32,6 +32,27 @@ function formatTimestamp(value) {
   }).format(new Date(value))
 }
 
+function formatDueTimestamp(value) {
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value))
+}
+
+function buildDueTimestamp(dateValue, timeValue) {
+  if (!dateValue && !timeValue) {
+    return null
+  }
+
+  if (!dateValue || !timeValue) {
+    return undefined
+  }
+
+  return new Date(`${dateValue}T${timeValue}`).toISOString()
+}
+
 function loadTheme() {
   const stored = localStorage.getItem(THEME_KEY)
   return themeOptions.some((option) => option.key === stored) ? stored : 'auto'
@@ -43,6 +64,7 @@ function mapTodo(row) {
     text: row.text,
     completed: row.completed,
     priority: row.priority,
+    dueAt: row.due_at,
     createdAt: row.created_at,
   }
 }
@@ -53,6 +75,8 @@ function App() {
   const [theme, setTheme] = useState(loadTheme)
   const [draft, setDraft] = useState('')
   const [priority, setPriority] = useState('medium')
+  const [dueDate, setDueDate] = useState('')
+  const [dueTime, setDueTime] = useState('')
   const [filter, setFilter] = useState('all')
   const [editingId, setEditingId] = useState(null)
   const [editingText, setEditingText] = useState('')
@@ -146,7 +170,7 @@ function App() {
 
       const { data, error } = await supabase
         .from('todos')
-        .select('id, text, completed, priority, created_at')
+        .select('id, text, completed, priority, due_at, created_at')
         .order('created_at', { ascending: false })
 
       if (!active) {
@@ -204,7 +228,7 @@ function App() {
 
     const { data, error } = await supabase
       .from('todos')
-      .select('id, text, completed, priority, created_at')
+      .select('id, text, completed, priority, due_at, created_at')
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -285,6 +309,13 @@ function App() {
       return
     }
 
+    const dueAt = buildDueTimestamp(dueDate, dueTime)
+
+    if (dueAt === undefined) {
+      setErrorMessage('Set both due date and due time, or leave both blank.')
+      return
+    }
+
     setSavingTodo(true)
     setErrorMessage('')
 
@@ -295,8 +326,9 @@ function App() {
         text,
         completed: false,
         priority,
+        due_at: dueAt,
       })
-      .select('id, text, completed, priority, created_at')
+      .select('id, text, completed, priority, due_at, created_at')
       .single()
 
     if (error) {
@@ -308,6 +340,8 @@ function App() {
     setTodos((current) => [mapTodo(data), ...current])
     setDraft('')
     setPriority('medium')
+    setDueDate('')
+    setDueTime('')
     setSavingTodo(false)
   }
 
@@ -584,6 +618,26 @@ function App() {
                   ))}
                 </select>
 
+                <label className="sr-only" htmlFor="due-date-input">
+                  Due date
+                </label>
+                <input
+                  id="due-date-input"
+                  type="date"
+                  value={dueDate}
+                  onChange={(event) => setDueDate(event.target.value)}
+                />
+
+                <label className="sr-only" htmlFor="due-time-input">
+                  Due time
+                </label>
+                <input
+                  id="due-time-input"
+                  type="time"
+                  value={dueTime}
+                  onChange={(event) => setDueTime(event.target.value)}
+                />
+
                 <button type="submit" disabled={savingTodo}>
                   {savingTodo ? 'Saving...' : 'Add task'}
                 </button>
@@ -689,6 +743,7 @@ function App() {
                             <span>
                               {priorityOptions.find((item) => item.key === todo.priority)?.label}
                             </span>
+                            {todo.dueAt ? <span>Due {formatDueTimestamp(todo.dueAt)}</span> : null}
                             <span>{formatTimestamp(todo.createdAt)}</span>
                           </div>
                         </div>
