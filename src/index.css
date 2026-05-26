@@ -1,0 +1,105 @@
+:root {
+  --bg-start: #f6f9fc;
+  --bg-end: #eef4fa;
+  --text-primary: #162033;
+  --text-secondary: #5f6f8d;
+  --text-tertiary: #64748b;
+  --panel-bg: rgba(255, 255, 255, 0.92);
+  --surface-bg: #ffffff;
+  --surface-muted: #fbfcfe;
+  --surface-soft: #f4f7fb;
+  --surface-strong: #eff4fb;
+  --border-soft: #d9e1ec;
+  --border-strong: #cfd8e5;
+  --border-card: #dfe6f0;
+  --shadow-colour: rgba(15, 23, 42, 0.08);
+  --shadow-soft: rgba(15, 23, 42, 0.06);
+  --primary: #2d6df6;
+  --primary-text: #ffffff;
+  --danger-soft: #fff2f1;
+  --danger-text: #b44545;
+  --success: #1fb574;
+  --success-soft: #f2fbf7;
+  --success-track: #dde7f2;
+  --info-soft: #f3f8ff;
+  --chip-neutral: #ffffff;
+  --chip-blue: #f3f8ff;
+  --chip-green: #f2fbf7;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--text-primary);
+  background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root[data-theme='dark'] {
+  --bg-start: #09111d;
+  --bg-end: #101a28;
+  --text-primary: #edf3ff;
+  --text-secondary: #bcc8dc;
+  --text-tertiary: #93a4bf;
+  --panel-bg: rgba(13, 22, 35, 0.88);
+  --surface-bg: #132033;
+  --surface-muted: #16263a;
+  --surface-soft: #1b2a40;
+  --surface-strong: #223551;
+  --border-soft: #2b3a50;
+  --border-strong: #344964;
+  --border-card: #2a3c54;
+  --shadow-colour: rgba(2, 8, 23, 0.42);
+  --shadow-soft: rgba(2, 8, 23, 0.35);
+  --primary: #6da4ff;
+  --primary-text: #09111d;
+  --danger-soft: #3a1f26;
+  --danger-text: #ffb4b4;
+  --success: #34d399;
+  --success-soft: #16322a;
+  --success-track: #243349;
+  --info-soft: #14263f;
+  --chip-neutral: #132033;
+  --chip-blue: #14263f;
+  --chip-green: #16322a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  color: var(--text-primary);
+  background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+  transition:
+    background 180ms ease,
+    color 180ms ease;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+#root {
+  min-height: 100vh;
+}
