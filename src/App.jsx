@@ -127,6 +127,7 @@ function App() {
     }
 
     let active = true
+    let ignoreInitialChange = true
 
     async function bootstrapSession() {
       const {
@@ -147,6 +148,7 @@ function App() {
         setTodos([])
       }
       setLoadingAuth(false)
+      ignoreInitialChange = false
     }
 
     bootstrapSession()
@@ -154,6 +156,7 @@ function App() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!active || ignoreInitialChange) return
       setSession(nextSession)
       if (!nextSession) {
         setTodos([])
@@ -182,9 +185,7 @@ function App() {
         .select('id, text, completed, priority, due_at, tags, created_at')
         .order('created_at', { ascending: false })
 
-      if (!active) {
-        return
-      }
+      if (!active) return
 
       if (error) {
         setErrorMessage(error.message)
@@ -192,7 +193,6 @@ function App() {
       } else {
         setTodos(data.map(mapTodo))
       }
-
       setLoadingTodos(false)
     }
 
@@ -203,6 +203,26 @@ function App() {
     }
   }, [session])
 
+  async function fetchTodos() {
+    if (!supabase || !session?.user) return
+
+    setLoadingTodos(true)
+    setErrorMessage('')
+
+    const { data, error } = await supabase
+      .from('todos')
+      .select('id, text, completed, priority, due_at, tags, created_at')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      setErrorMessage(error.message)
+      setLoadingTodos(false)
+      return
+    }
+
+    setTodos(data.map(mapTodo))
+    setLoadingTodos(false)
+  }
   const counts = useMemo(() => {
     const completed = todos.filter((todo) => todo.completed).length
     const active = todos.length - completed
@@ -241,30 +261,6 @@ function App() {
 
     return filterByState.filter((todo) => todo.tags.includes(selectedTag))
   }, [filter, selectedTag, todos])
-
-  async function refreshTodos() {
-    if (!supabase || !session?.user) {
-      return
-    }
-
-    setLoadingTodos(true)
-    setErrorMessage('')
-
-    const { data, error } = await supabase
-      .from('todos')
-      .select('id, text, completed, priority, due_at, tags, created_at')
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      setErrorMessage(error.message)
-      setLoadingTodos(false)
-      return
-    }
-
-    setTodos(data.map(mapTodo))
-    setLoadingTodos(false)
-  }
-
   async function handleAuthSubmit(event) {
     event.preventDefault()
 
@@ -343,6 +339,7 @@ function App() {
 
     setSavingTodo(true)
     setErrorMessage('')
+    setStatusMessage('')
 
     const { data, error } = await supabase
       .from('todos')
@@ -482,6 +479,11 @@ function App() {
 
     setSavingTodo(true)
     setErrorMessage('')
+
+    if (editingId && completedIds.includes(editingId)) {
+      setEditingId(null)
+      setEditingText('')
+    }
 
     const { error } = await supabase.from('todos').delete().in('id', completedIds)
 
@@ -730,7 +732,7 @@ function App() {
                     <button
                       type="button"
                       className="ghost-button icon-inline"
-                      onClick={refreshTodos}
+                       onClick={fetchTodos}
                       disabled={loadingTodos}
                     >
                       <RefreshCw size={14} className={loadingTodos ? 'spinning-icon' : ''} />
