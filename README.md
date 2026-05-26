@@ -29,6 +29,7 @@ create table public.todos (
   completed boolean not null default false,
   priority text not null default 'medium',
   due_at timestamptz,
+  tags text[] not null default '{}',
   created_at timestamptz not null default now()
 );
 
@@ -62,14 +63,20 @@ using ((select auth.uid()) = user_id);
 
 4. Start the app and create an account from the sign-in screen.
 
-If you already created the table before this change, add the new column:
+If you already created the table earlier, add the new columns with:
 
 ```sql
-alter table public.todos add column due_at timestamptz;
+alter table public.todos
+add column if not exists due_at timestamptz;
+
+alter table public.todos
+add column if not exists tags text[] not null default '{}';
 ```
 
 ## Notes
 
 - Theme preference stays in local storage.
 - Todos are stored in Supabase once you sign in.
+- Due dates are optional, but require both a date and a time when set.
+- Tags are entered as a comma-separated list and stored as a Postgres text array.
 - If the app says the Supabase keys are missing, check `.env.local`.

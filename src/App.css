@@ -190,7 +190,7 @@
 
 .composer-form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 140px 160px 140px 128px;
+  grid-template-columns: minmax(0, 1.3fr) minmax(180px, 0.8fr) 140px 160px 140px 128px;
   gap: 12px;
 }
 
@@ -243,6 +243,41 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tag-filter-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tag-filter-label {
+  font-size: 0.84rem;
+  color: var(--text-tertiary);
+}
+
+.tag-filter-list {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-filter-list button,
+.tag-chip {
+  padding: 6px 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  background: var(--surface-bg);
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.tag-filter-list button.active {
+  background: var(--surface-strong);
+  color: var(--text-primary);
 }
 
 .filter-tabs {
@@ -390,8 +425,14 @@
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  align-items: center;
   font-size: 0.84rem;
   color: var(--text-tertiary);
+}
+
+.tag-chip {
+  padding: 4px 10px;
+  color: var(--text-primary);
 }
 
 .todo-actions {
@@ -517,6 +558,56 @@
 
 .account-card {
   gap: 14px;
+}
+
+@media (max-width: 1080px) {
+  .composer-form {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .composer-form button {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    padding: 18px;
+  }
+
+  .app-header,
+  .list-toolbar,
+  .progress-card {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-actions,
+  .stats-row {
+    justify-items: stretch;
+    justify-content: flex-start;
+  }
+
+  .content-grid,
+  .auth-form,
+  .composer-form {
+    grid-template-columns: 1fr;
+  }
+
+  .composer-form button,
+  .auth-form button {
+    grid-column: auto;
+  }
+
+  .todo-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .todo-actions {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
 }
 
 .sign-out-button {

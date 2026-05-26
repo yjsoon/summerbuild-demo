@@ -17,6 +17,8 @@ const priorityOptions = [
   { key: 'high', label: 'High' },
 ]
 
+const defaultTagPlaceholder = 'work, home, errand'
+
 const themeOptions = [
   { key: 'light', label: 'Light', icon: Sun },
   { key: 'dark', label: 'Dark', icon: Moon },
@@ -65,8 +67,13 @@ function mapTodo(row) {
     completed: row.completed,
     priority: row.priority,
     dueAt: row.due_at,
+    tags: Array.isArray(row.tags) ? row.tags : [],
     createdAt: row.created_at,
   }
+}
+
+function parseTags(value) {
+  return [...new Set(value.split(',').map((tag) => tag.trim()).filter(Boolean))]
 }
 
 function App() {
@@ -74,10 +81,12 @@ function App() {
   const [todos, setTodos] = useState([])
   const [theme, setTheme] = useState(loadTheme)
   const [draft, setDraft] = useState('')
+  const [tagDraft, setTagDraft] = useState('')
   const [priority, setPriority] = useState('medium')
   const [dueDate, setDueDate] = useState('')
   const [dueTime, setDueTime] = useState('')
   const [filter, setFilter] = useState('all')
+  const [activeTag, setActiveTag] = useState('all')
   const [editingId, setEditingId] = useState(null)
   const [editingText, setEditingText] = useState('')
   const [authMode, setAuthMode] = useState('sign-in')
@@ -170,7 +179,7 @@ function App() {
 
       const { data, error } = await supabase
         .from('todos')
-        .select('id, text, completed, priority, due_at, created_at')
+        .select('id, text, completed, priority, due_at, tags, created_at')
         .order('created_at', { ascending: false })
 
       if (!active) {
@@ -194,18 +203,6 @@ function App() {
     }
   }, [session])
 
-  const visibleTodos = useMemo(() => {
-    if (filter === 'active') {
-      return todos.filter((todo) => !todo.completed)
-    }
-
-    if (filter === 'completed') {
-      return todos.filter((todo) => todo.completed)
-    }
-
-    return todos
-  }, [filter, todos])
-
   const counts = useMemo(() => {
     const completed = todos.filter((todo) => todo.completed).length
     const active = todos.length - completed
@@ -218,6 +215,33 @@ function App() {
     }
   }, [todos])
 
+  const availableTags = useMemo(
+    () => [...new Set(todos.flatMap((todo) => todo.tags))].sort((left, right) => left.localeCompare(right)),
+    [todos],
+  )
+  const selectedTag =
+    activeTag === 'all' || availableTags.includes(activeTag) ? activeTag : 'all'
+
+  const visibleTodos = useMemo(() => {
+    const filterByState = (() => {
+      if (filter === 'active') {
+        return todos.filter((todo) => !todo.completed)
+      }
+
+      if (filter === 'completed') {
+        return todos.filter((todo) => todo.completed)
+      }
+
+      return todos
+    })()
+
+    if (selectedTag === 'all') {
+      return filterByState
+    }
+
+    return filterByState.filter((todo) => todo.tags.includes(selectedTag))
+  }, [filter, selectedTag, todos])
+
   async function refreshTodos() {
     if (!supabase || !session?.user) {
       return
@@ -228,7 +252,7 @@ function App() {
 
     const { data, error } = await supabase
       .from('todos')
-      .select('id, text, completed, priority, due_at, created_at')
+      .select('id, text, completed, priority, due_at, tags, created_at')
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -304,6 +328,7 @@ function App() {
     }
 
     const text = draft.trim()
+    const tags = parseTags(tagDraft)
 
     if (!text) {
       return
@@ -327,8 +352,9 @@ function App() {
         completed: false,
         priority,
         due_at: dueAt,
+        tags,
       })
-      .select('id, text, completed, priority, due_at, created_at')
+      .select('id, text, completed, priority, due_at, tags, created_at')
       .single()
 
     if (error) {
@@ -339,6 +365,7 @@ function App() {
 
     setTodos((current) => [mapTodo(data), ...current])
     setDraft('')
+    setTagDraft('')
     setPriority('medium')
     setDueDate('')
     setDueTime('')
@@ -603,6 +630,17 @@ function App() {
                   placeholder="Add a task for today"
                 />
 
+                <label className="sr-only" htmlFor="tag-input">
+                  Tags
+                </label>
+                <input
+                  id="tag-input"
+                  type="text"
+                  value={tagDraft}
+                  onChange={(event) => setTagDraft(event.target.value)}
+                  placeholder={defaultTagPlaceholder}
+                />
+
                 <label className="sr-only" htmlFor="priority-select">
                   Priority
                 </label>
@@ -665,6 +703,30 @@ function App() {
                   </div>
 
                   <div className="toolbar-actions">
+                    <div className="tag-filter-wrap">
+                      <span className="tag-filter-label">Tag</span>
+                      <div className="tag-filter-list" aria-label="Tag filter">
+                        <button
+                          type="button"
+                          className={selectedTag === 'all' ? 'active' : ''}
+                          aria-pressed={selectedTag === 'all'}
+                          onClick={() => setActiveTag('all')}
+                        >
+                          All tags
+                        </button>
+                        {availableTags.map((tag) => (
+                          <button
+                            key={tag}
+                            type="button"
+                            className={selectedTag === tag ? 'active' : ''}
+                            aria-pressed={selectedTag === tag}
+                            onClick={() => setActiveTag(tag)}
+                          >
+                            {tag}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <button
                       type="button"
                       className="ghost-button icon-inline"
@@ -744,6 +806,16 @@ function App() {
                               {priorityOptions.find((item) => item.key === todo.priority)?.label}
                             </span>
                             {todo.dueAt ? <span>Due {formatDueTimestamp(todo.dueAt)}</span> : null}
+                            {todo.tags.map((tag) => (
+                              <button
+                                key={tag}
+                                type="button"
+                                className="tag-chip"
+                                onClick={() => setActiveTag(tag)}
+                              >
+                                #{tag}
+                              </button>
+                            ))}
                             <span>{formatTimestamp(todo.createdAt)}</span>
                           </div>
                         </div>
@@ -791,6 +863,9 @@ function App() {
                         ? 'All tasks are wrapped up.'
                         : `${counts.active} task${counts.active === 1 ? '' : 's'} still need attention.`}
                     </p>
+                    {availableTags.length > 0 ? (
+                      <p>{availableTags.length} tag{availableTags.length === 1 ? '' : 's'} in use.</p>
+                    ) : null}
                   </div>
                 </section>
 
