@@ -190,7 +190,7 @@
 
 .composer-form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 140px 128px;
+  grid-template-columns: minmax(0, 1fr) 140px 160px 140px 128px;
   gap: 12px;
 }
 
